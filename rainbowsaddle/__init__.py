@@ -46,6 +46,7 @@ class RainbowSaddle(object):
                 suffix='.pid', delete=False)
         fp.close()
         self.pidfile = fp.name
+        self.old_arbiter_graceful_timeout = options.old_arbiter_graceful_timeout
         # Start gunicorn process
         args = options.gunicorn_args + ['--pid', self.pidfile]
         process = subprocess.Popen(args)
@@ -121,6 +122,7 @@ class RainbowSaddle(object):
             time.sleep(0.3)
 
         # Gracefully kill old workers
+        time.sleep(self.old_arbiter_graceful_timeout)
         self.log('Stoping old arbiter with PID %s' % self.arbiter_pid)
         os.kill(self.arbiter_pid, signal.SIGTERM)
         self.wait_pid(self.arbiter_pid)
@@ -164,6 +166,8 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
+    parser.add_argument('--old-arbiter-graceful-timeout', help='', type=int,
+                        dest='old_arbiter_graceful_timeout', default=0)
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
     options = parser.parse_args()
