@@ -11,6 +11,11 @@ import argparse
 import tempfile
 import functools
 import traceback
+import statsd
+
+stats = statsd.StatsClient(prefix='rainbowsaddle')
+
+enable_statsd = False
 
 import psutil
 
@@ -45,6 +50,8 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
+        if options.enable_statsd :
+            enable_statsd = True;
         self.pidfile = fp.name
         # Start gunicorn process
         args = options.gunicorn_args + ['--pid', self.pidfile]
@@ -118,6 +125,9 @@ class RainbowSaddle(object):
                         prev_pid = pid
             else:
                 print('pidfile not found: ' + self.pidfile)
+
+            if enable_statsd :
+                stats.incr("Restart")
             time.sleep(0.3)
 
         # Gracefully kill old workers
@@ -166,6 +176,7 @@ def main():
             'gunicorn PID')
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
+    parser.add_argument('--enable-statsd', help='set true or false, default set to false')
     options = parser.parse_args()
 
     # Write pid file
