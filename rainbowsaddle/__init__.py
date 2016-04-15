@@ -49,14 +49,15 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
-        if options.enable_statsd=="True":
+        if options.enable_statsd:
             enable_statsd = True
-            if enable_statsd:
-                try:
-                    import statsd
-                    self.stats = statsd.StatsClient(prefix='rainbowsaddle')
-                except ImportError:
-                    print("Failed to import statsd")
+            print("set value of enable statsd rainbow saddle to %s"%options.enable_statsd)
+   
+            try:
+                import statsd
+                self.stats = statsd.StatsClient(prefix='rainbowsaddle')
+            except ImportError:
+                print("Failed to import statsd")
 
         self.pidfile = fp.name
         # Start gunicorn process
@@ -119,6 +120,8 @@ class RainbowSaddle(object):
         # file until we get the same value twice)
         prev_pid = None
         while True:
+            if enable_statsd :
+                self.stats.incr("hotrestart")
             if op.exists(self.pidfile):
                 with open(self.pidfile) as fp:
                     try:
@@ -132,8 +135,6 @@ class RainbowSaddle(object):
             else:
                 print('pidfile not found: ' + self.pidfile)
 
-            if enable_statsd :
-                self.stats.incr("hotrestart")
             time.sleep(0.3)
 
         # Gracefully kill old workers
@@ -180,9 +181,10 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
+    parser.add_argument('--enable-statsd', help='set True or False, default set to false')
+
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
-    parser.add_argument('--enable-statsd', help='set true or false, default set to false')
     options = parser.parse_args()
 
     # Write pid file
