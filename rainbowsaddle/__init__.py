@@ -14,6 +14,7 @@ import traceback
 
 
 enable_statsd = False
+stats = None
 
 import psutil
 
@@ -41,7 +42,7 @@ class RainbowSaddle(object):
         self._arbiter_pid = None
         self.hup_queue = queue.Queue()
         self.stopped = False
-        self.stats = None
+
         # Create a temporary file for the gunicorn pid file
         if options.gunicorn_pidfile:
             fp = open(options.gunicorn_pidfile, 'wr')
@@ -49,15 +50,6 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
-        if options.enable_statsd:
-            enable_statsd = True
-            print("set value of enable statsd rainbow saddle to %s"%options.enable_statsd)
-   
-            try:
-                import statsd
-                self.stats = statsd.StatsClient(prefix='rainbowsaddle')
-            except ImportError:
-                print("Failed to import statsd")
 
         self.pidfile = fp.name
         # Start gunicorn process
@@ -121,7 +113,7 @@ class RainbowSaddle(object):
         prev_pid = None
         while True:
             if enable_statsd :
-                self.stats.incr("hotrestart")
+                stats.incr("hotrestart")
             if op.exists(self.pidfile):
                 with open(self.pidfile) as fp:
                     try:
@@ -181,7 +173,7 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
-    parser.add_argument('--enable-statsd', help='set True or False, default set to false')
+    parser.add_argument('--statsd', help='set True or False, default set to false')
 
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
@@ -192,6 +184,15 @@ def main():
         with open(options.pid, 'w') as fp:
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
+    
+    if options.statsd is not None:
+        enable_statsd = True
+   
+        try:
+            import statsd
+            stats = statsd.StatsClient(prefix='rainbowsaddle')
+        except ImportError:
+            print("Failed to import statsd")    
 
     # Run script
     saddle = RainbowSaddle(options)
