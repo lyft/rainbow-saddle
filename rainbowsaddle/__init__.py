@@ -133,7 +133,7 @@ class RainbowSaddle(object):
                 print('pidfile not found: ' + self.pidfile)
 
             if enable_statsd :
-                self.stats.incr("Restart")
+                self.stats.incr("hotrestart")
             time.sleep(0.3)
 
         # Gracefully kill old workers
