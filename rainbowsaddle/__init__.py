@@ -11,10 +11,11 @@ import argparse
 import tempfile
 import functools
 import traceback
+import statsd
 
+stats = statsd.StatsClient(prefix='rainbowsaddle')
 
-enable_statsd = False
-stats = None
+enable_statsd = True
 
 import psutil
 
@@ -185,14 +186,8 @@ def main():
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
     
-    if options.statsd is not None:
-        enable_statsd = True
-   
-        try:
-            import statsd
-            stats = statsd.StatsClient(prefix='rainbowsaddle')
-        except ImportError:
-            print("Failed to import statsd")    
+    if options.statsd is None:
+        enable_statsd = False
 
     # Run script
     saddle = RainbowSaddle(options)
