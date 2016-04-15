@@ -11,11 +11,9 @@ import argparse
 import tempfile
 import functools
 import traceback
-import statsd
 
 
-enable_statsd = True
-stats = statsd.StatsClient(prefix='rainbowsaddle')
+enable_statsd = False
 
 import psutil
 
@@ -43,6 +41,7 @@ class RainbowSaddle(object):
         self._arbiter_pid = None
         self.hup_queue = queue.Queue()
         self.stopped = False
+        self.stats = None
         # Create a temporary file for the gunicorn pid file
         if options.gunicorn_pidfile:
             fp = open(options.gunicorn_pidfile, 'wr')
@@ -50,6 +49,14 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
+        if options.enable_statsd=="True":
+            enable_statsd = True
+            if enable_statsd:
+                try:
+                    import statsd
+                    self.stats = statsd.StatsClient(prefix='rainbowsaddle')
+                except ImportError:
+                    print("Failed to import statsd")
 
         self.pidfile = fp.name
         # Start gunicorn process
@@ -124,7 +131,9 @@ class RainbowSaddle(object):
                         prev_pid = pid
             else:
                 print('pidfile not found: ' + self.pidfile)
-            stats.incr("Restart")
+
+            if enable_statsd :
+                self.stats.incr("Restart")
             time.sleep(0.3)
 
         # Gracefully kill old workers
