@@ -11,11 +11,16 @@ import argparse
 import tempfile
 import functools
 import traceback
-import statsd
-
-stats = statsd.StatsClient(prefix='rainbowsaddle')
 
 enable_statsd = True
+stats = None
+
+try:
+    import statsd
+    stats = statsd.StatsClient(prefix='rainbowsaddle')
+except ImportError:
+    print('Statsd import failed')
+    enable_statsd = False
 
 import psutil
 
