@@ -179,7 +179,7 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
-    parser.add_argument('--statsd', help='set True or False, default set to false')
+    parser.add_argument('--statsd', help='Set it to true, if you dont set it by default its false')
 
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
