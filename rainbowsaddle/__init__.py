@@ -12,15 +12,13 @@ import tempfile
 import functools
 import traceback
 
-enable_statsd = True
 stats = None
 
 try:
     import statsd
     stats = statsd.StatsClient(prefix='rainbowsaddle')
 except ImportError:
-    print('Statsd import failed')
-    enable_statsd = False
+    print('Statsd import failed, statsd will be diabled', file=sys.stderr)
 
 import psutil
 
@@ -118,7 +116,7 @@ class RainbowSaddle(object):
         # file until we get the same value twice)
         prev_pid = None
         while True:
-            if enable_statsd :
+            if stats is not None :
                 stats.incr("hotrestart")
             if op.exists(self.pidfile):
                 with open(self.pidfile) as fp:
@@ -192,7 +190,7 @@ def main():
         atexit.register(os.unlink, options.pid)
     
     if options.statsd is None:
-        enable_statsd = False
+        stats = None
 
     # Run script
     saddle = RainbowSaddle(options)
