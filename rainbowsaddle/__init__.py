@@ -189,7 +189,7 @@ def main():
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
     
-    if options.statsd is None or options.statsd is False:
+    if options.statsd is False:
         stats = None
 
     # Run script
