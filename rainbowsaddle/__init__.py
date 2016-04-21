@@ -53,9 +53,7 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
-
-        self.log("statsd value {}".format(options.statsd))
-
+        
         if options.statsd.lower() == "true" and stats is None:
             print("Error loading statsd, no statsd metrics will be generated", file=sys.stderr)
 
