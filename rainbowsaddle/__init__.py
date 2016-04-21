@@ -53,7 +53,7 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
         fp.close()
-        
+
         if options.statsd.lower() == "true" and stats is None:
             print("Error loading statsd, no statsd metrics will be generated", file=sys.stderr)
 
@@ -132,7 +132,6 @@ class RainbowSaddle(object):
                         prev_pid = pid
             else:
                 print('pidfile not found: ' + self.pidfile)
-
             time.sleep(0.3)
 
         # Gracefully kill old workers
