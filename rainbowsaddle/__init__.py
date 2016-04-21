@@ -56,8 +56,8 @@ class RainbowSaddle(object):
 
         self.log("statsd value {}".format(options.statsd))
 
-        if stats is None:
-            self.Log("statsd not initialized")
+        if options.statsd.lower() == "true" and stats is None:
+            print("Error loading statsd, no stats metrics will be generated", file=sys.stderr)
 
         self.pidfile = fp.name
         # Start gunicorn process
@@ -192,7 +192,7 @@ def main():
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
     
-    if options.statsd is None:
+    if options.statsd is None or options.statsd.lower()!="true":
         stats = None
 
     # Run script
