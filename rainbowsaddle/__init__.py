@@ -178,7 +178,7 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
-    parser.add_argument('--statsd', action='store_true', help='Set it to true to enable statsd metrics')
+    parser.add_argument('--statsd', action='store_true', help='Set it to enable statsd metrics')
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
     options = parser.parse_args()
