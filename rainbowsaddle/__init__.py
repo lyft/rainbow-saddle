@@ -18,7 +18,9 @@ try:
     import statsd
     stats = statsd.StatsClient(prefix='rainbowsaddle')
 except ImportError:
-    print('Statsd import failed, statsd will be diabled', file=sys.stderr)
+    stats = None
+    pass
+    
 
 import psutil
 
@@ -46,7 +48,6 @@ class RainbowSaddle(object):
         self._arbiter_pid = None
         self.hup_queue = queue.Queue()
         self.stopped = False
-
         # Create a temporary file for the gunicorn pid file
         if options.gunicorn_pidfile:
             fp = open(options.gunicorn_pidfile, 'wr')
@@ -177,7 +178,7 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
-    parser.add_argument('--statsd', help='Set it to true, if you dont set it by default its false')
+    parser.add_argument('--statsd', help='Set it to true to enable statsd metrics')
 
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
@@ -191,6 +192,8 @@ def main():
     
     if options.statsd is None:
         stats = None
+    elif stats is None:
+        print('Statsd import failed, statsd will be diabled', file=sys.stderr)
 
     # Run script
     saddle = RainbowSaddle(options)
