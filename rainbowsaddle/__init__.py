@@ -54,6 +54,11 @@ class RainbowSaddle(object):
                 suffix='.pid', delete=False)
         fp.close()
 
+        self.log("statsd value {}"%options.statsd)
+
+        if statsd is None:
+            self.Log("statsd not initialize")
+
         self.pidfile = fp.name
         # Start gunicorn process
         args = options.gunicorn_args + ['--pid', self.pidfile]
