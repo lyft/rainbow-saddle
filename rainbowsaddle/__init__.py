@@ -189,8 +189,6 @@ def main():
     
     if options.statsd is None:
         stats = None
-    elif stats == None:
-        print('Statsd import failed, statsd will be diabled', file=sys.stderr)
 
     # Run script
     saddle = RainbowSaddle(options)
