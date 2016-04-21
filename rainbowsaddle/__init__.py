@@ -54,7 +54,7 @@ class RainbowSaddle(object):
                 suffix='.pid', delete=False)
         fp.close()
 
-        if options.statsd.lower() == "true" and stats is None:
+        if options.statsd and stats is None:
             print("Error loading statsd, no statsd metrics will be generated", file=sys.stderr)
 
         self.pidfile = fp.name
@@ -178,7 +178,7 @@ def main():
             'rainbow-saddle PID')
     parser.add_argument('--gunicorn-pidfile', help='a filename to store the '
             'gunicorn PID')
-    parser.add_argument('--statsd', help='Set it to true to enable statsd metrics')
+    parser.add_argument('--statsd', action='store_true', help='Set it to true to enable statsd metrics')
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
     options = parser.parse_args()
@@ -189,7 +189,7 @@ def main():
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
     
-    if options.statsd is None or options.statsd.lower()!="true":
+    if options.statsd is None or options.statsd is False:
         stats = None
 
     # Run script
