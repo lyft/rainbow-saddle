@@ -118,7 +118,7 @@ class RainbowSaddle(object):
         # file until we get the same value twice)
         prev_pid = None
         while True:
-            if stats is not None :
+            if stats is not None:
                 stats.incr("hotrestart")
             if op.exists(self.pidfile):
                 with open(self.pidfile) as fp:
@@ -188,8 +188,8 @@ def main():
         with open(options.pid, 'w') as fp:
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
-    
-    if options.statsd is False:
+
+    if not options.statsd:
         stats = None
 
     # Run script
