@@ -19,6 +19,14 @@ try:
 except ImportError:
     import queue
 
+stats = None
+
+try:
+    import statsd
+    stats = statsd.StatsClient(prefix='rainbowsaddle')
+except ImportError:
+    pass
+
 
 def signal_handler(func):
     @functools.wraps(func)
@@ -45,6 +53,11 @@ class RainbowSaddle(object):
             fp = tempfile.NamedTemporaryFile(prefix='rainbow-saddle-gunicorn-',
                 suffix='.pid', delete=False)
             fp.close()
+
+            if options.statsd and stats is None:
+                print("Error loading statsd, no statsd metrics will be "
+                      "generated", file=sys.stderr)
+
             self.pidfile = fp.name
         # Start gunicorn process
         args = options.gunicorn_args + ['--pid', self.pidfile]
@@ -107,6 +120,8 @@ class RainbowSaddle(object):
         # file until we get the same value twice)
         _verification_pid = None
         while True:
+            if stats:
+                stats.incr("hotrestart")
             with open(new_pidfile) as fp:
                 try:
                     new_pid = int(fp.read())
@@ -155,6 +170,8 @@ class RainbowSaddle(object):
 
 
 def main():
+    global stats
+
     # Parse command line
     parser = argparse.ArgumentParser(description='Wrap gunicorn to handle '
             'graceful restarts correctly')
@@ -164,6 +181,7 @@ def main():
             'gunicorn PID')
     parser.add_argument('gunicorn_args', nargs=argparse.REMAINDER,
             help='gunicorn command line')
+    parser.add_argument('--statsd', action='store_true', help='Enable statsd metrics')
     options = parser.parse_args()
 
     # Write pid file
@@ -171,6 +189,9 @@ def main():
         with open(options.pid, 'w') as fp:
             fp.write('%s\n' % os.getpid())
         atexit.register(os.unlink, options.pid)
+
+    if not options.statsd:
+        stats = None
 
     # Run script
     saddle = RainbowSaddle(options)
