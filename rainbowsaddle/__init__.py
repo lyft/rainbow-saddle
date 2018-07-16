@@ -20,6 +20,25 @@ except ImportError:
     import queue
 
 
+class TimeoutException(Exception):
+    pass
+
+
+class Timeout(object):
+    def __init__(self, max_wait):
+        self.max_wait = max_wait
+        self.start = time.now()
+
+    def expired(self):
+        if time.now() - self.start > self.max_wait:
+            return True
+        return False
+
+    def raise_expired(self):
+        if self.expired():
+            raise TimeoutException()
+
+
 def signal_handler(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -95,9 +114,11 @@ class RainbowSaddle(object):
         self.log('Starting new arbiter')
         os.kill(self.arbiter_pid, signal.SIGUSR2)
 
-        # Wait until the new master is up
+        # Wait until the new master is up, 30s
         new_pidfile = self.pidfile + '.2'
+        newpid_timeout = Timeout(30)
         while True:
+            newpid_timeout.raise_expired()
             if op.exists(new_pidfile):
                 self.log('New pidfile found: {}'.format(new_pidfile))
                 break
@@ -105,8 +126,10 @@ class RainbowSaddle(object):
 
         # Read new arbiter PID, being super paranoid about it (we read the PID
         # file until we get the same value twice)
+        verification_timeout = Timeout(120)
         _verification_pid = None
         while True:
+            vertification_timeout.raise_expired()
             with open(new_pidfile) as fp:
                 try:
                     new_pid = int(fp.read())
@@ -144,7 +167,9 @@ class RainbowSaddle(object):
             os.waitpid(pid, 0)
         except OSError as err:
             if err.errno == 10:
+                wait_timeout = Timeout(90)
                 while True:
+                    wait_timeout.raise_expired()
                     try:
                         process = psutil.Process(pid)
                         if process.status() == psutil.STATUS_ZOMBIE:
